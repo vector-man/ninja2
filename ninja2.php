@@ -1,121 +1,22 @@
 #!/usr/bin/php -q
 <?php
-
 /*
-    NINJA - PHP Edition
-    Copyright (C) 2006 Derrick Sobodash
-    Version: 2.0
-    Web    : http://derrick.sobodash.com/
-    E-mail : derrick@sobodash.com
 
-    This program is free software; you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation; either version 2 of the License, or
-    (at your option) any later version.
+NINJA2
 
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
+Patching system that creates format independent patches for ROM images of
+various video game consoles.
 
-    You should have received a copy of the GNU General Public License
-    along with this program (license.txt); if not, write to the Free Software
-    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+This software depends on the GMP library of PHP. Debian/Ubuntu/Mint users can
+satisfy this requirement by installing the package "php5-gmp".
+
+Version:   2.0
+Author:    Derrick Sobodash <derrick@sobodash.com>
+Copyright: (c) 2006, 2012 Derrick Sobodash
+Web site:  https://github.com/sobodash/ninja2/
+License:   BSD License <http://opensource.org/licenses/bsd-license.php>
+
 */
-
-/******************************************************************************
-**
-** CONFIGURE
-**
-******************************************************************************/
-
-// System Codepage:
-//
-// This is for conversion of UTF-8 text. The Windows Console has problems
-// displaying UTF-8 input, so we have to convert the stored UTF-8 to another
-// console-friendly codepage.
-//
-// Linux and FreeBSD users may comment this out, since those operating
-// systems do not have issues with UTF-8 on the console. Windows users are
-// advised to set this to the language of their machines.
-//
-// Some common language encodings are commented out below:
-
-// RAW ASCII
-define("CODEPAGE", "ASCII");
-
-// Japanese Shift-JIS
-//define("CODEPAGE", "SJIS");
-
-// Japanese EUC
-//define("CODEPAGE", "EUC");
-
-// Chinese GuoBiao2312
-//define("CODEPAGE", "CN-GB");
-
-// Chinese EUC
-//define("CODEPAGE", "EUC-CN");
-
-// Chinese BIG-5
-//define("CODEPAGE", "BIG-5");
-
-// Korean EUC
-//define("CODEPAGE", "EUC-KR");
-
-// Hungarian/Serbian/Bosnian/Croatian/Czech/Polish/Romanian
-//define("CODEPAGE", "ISO_8859-2");
-
-// Russian (Cyrillic text)
-//define("CODEPAGE", "ISO_8859-5");
-
-// Arabic
-//define("CODEPAGE", "ISO_8859-6");
-
-// Greek
-//define("CODEPAGE", "ISO_8859-7");
-
-// Hebrew
-//define("CODEPAGE", "ISO_8859-8");
-
-// Turkish
-//define("CODEPAGE", "ISO_8859-9");
-
-
-/******************************************************************************
-**
-** SOURCE CODE BEGINS
-**
-******************************************************************************/
-
-// Load GMP if it is present on the host system
-// GMP is needed for safe, 64-bit math
-if(!extension_loaded('gmp'))
-{
-      
-  if (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN')
-    dl('php_gmp.dll');
-  else
-    dl('gmp.so');
-
-}
-else
-  die("Fatal Error: GMP library was not found\r\n\r\n");
-
-// Load mbstring if it is present on the host system
-// mbstring is needed for UTF-8
-if(!extension_loaded('mbstring'))
-{
-      
-  if (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN')
-    dl('php_mbstring.dll');
-  else
-    dl('mbstring.so');
-
-}
-else
-  die("Fatal Error: mbstring library was not found\r\n\r\n");
-
-
 
 /******************************************************************************
 **
@@ -160,7 +61,7 @@ function create_ninja2($source, $modified, $target, $type = null, $patch_info = 
   else
   {
 
-    echo("Writing patch info block ...\r\n");
+    echo("Writing patch info block...\n");
 
     // Encoding
     fputs($fo, chr($patch_info["enc"]));
@@ -196,7 +97,7 @@ function create_ninja2($source, $modified, $target, $type = null, $patch_info = 
   if(is_dir($source) && is_dir($modified))
   {
 
-    echo("Creating patch between directories ...\r\n");
+    echo("Creating patch between directories...\n");
     $files = list_dir($modified, "*.*", "/", TRUE);
 
     // Clean out the modified path from the files list
@@ -206,7 +107,7 @@ function create_ninja2($source, $modified, $target, $type = null, $patch_info = 
     for($i = 0; $i < count($files); $i ++)
     {
 
-      echo("Generating ".$files[$i]." ...\r\n");
+      echo("Generating ".$files[$i]."...\n");
       fputs($fo, ninja_block($source, $modified, $type, $files[$i]));
 
     }
@@ -219,21 +120,21 @@ function create_ninja2($source, $modified, $target, $type = null, $patch_info = 
   else if(is_file($source) && is_file($modified))
   {
 
-    echo("Creating patch between files ...\r\n");
+    echo("Creating patch between files...\n");
 
     fputs($fo, ninja_block($source, $modified, $type) . "\0");
 
   }
 
   else
-    die("Error: create_ninja2(): Source and modified are not the same type\r\n\r\n");
+    die("Error: create_ninja2(): Source and modified are not the same type\n\n");
 
   fclose($fo);
 
   if(filesize($target) == 2 * KBYTE + 1)
   {
 
-    echo("Files have no differences. Deleting patch ...\r\n");
+    echo("Files have no differences. Deleting patch...\n");
     unlink($target);
 
   }
@@ -277,7 +178,7 @@ function ninja_block($source, $modified, $type, $file = null)
 
     // Nintendo Entertainment System/Famicom
     case "1":
-      echo("Reading as Nintendo Entertainment System/Famicom ROM ...\r\n");
+      echo("Reading as Nintendo Entertainment System/Famicom ROM...\n");
       $fo = fopen("ninja.src", "wb");
       list($rom, $header) = nes_read($source . $file);
       fputs($fo, $rom);
@@ -294,7 +195,7 @@ function ninja_block($source, $modified, $type, $file = null)
 
     // Super Famicom
     case "3":
-      echo("Reading as Super Famicom ROM ...\r\n");
+      echo("Reading as Super Famicom ROM...\n");
       $fo = fopen("ninja.src", "wb");
       list($rom, $header) = sfam_read($source . $file);
       fputs($fo, $rom);
@@ -310,7 +211,7 @@ function ninja_block($source, $modified, $type, $file = null)
 
     // Nintendo 64
     case "4":
-      echo("Reading as Nintendo 64 ROM ...\r\n");
+      echo("Reading as Nintendo 64 ROM...\n");
       $fo = fopen("ninja.src", "wb");
       fputs($fo, n64_read($source . $file));
       fclose($fo);
@@ -324,7 +225,7 @@ function ninja_block($source, $modified, $type, $file = null)
 
     // Game Boy
     case "5":
-      echo("Reading as Game Boy ROM ...\r\n");
+      echo("Reading as Game Boy ROM...\n");
       $fo = fopen("ninja.src", "wb");
       fputs($fo, gb_read($source . $file));
       fclose($fo);
@@ -338,7 +239,7 @@ function ninja_block($source, $modified, $type, $file = null)
 
     // Sega Master System
     case "6":
-      echo("Reading as Sega Master System ROM ...\r\n");
+      echo("Reading as Sega Master System ROM...\n");
       $fo = fopen("ninja.src", "wb");
       fputs($fo, sms_read($source . $file));
       fclose($fo);
@@ -352,7 +253,7 @@ function ninja_block($source, $modified, $type, $file = null)
 
     // Sega Megadrive
     case "7":
-      echo("Reading as Sega Megadrive ROM ...\r\n");
+      echo("Reading as Sega Megadrive ROM...\n");
       $fo = fopen("ninja.src", "wb");
       fputs($fo, mega_read($source . $file));
       fclose($fo);
@@ -366,7 +267,7 @@ function ninja_block($source, $modified, $type, $file = null)
 
     // NEC PC-Engine
     case "8":
-      echo("Reading as NEC PC-Engine ROM ...\r\n");
+      echo("Reading as NEC PC-Engine ROM...\n");
       $fo = fopen("ninja.src", "wb");
       $rom = pce_read($source . $file);
       fputs($fo, $rom);
@@ -382,7 +283,7 @@ function ninja_block($source, $modified, $type, $file = null)
 
     // Atari Lynx
     case "9":
-      echo("Reading as Atari Lynx ROM ...\r\n");
+      echo("Reading as Atari Lynx ROM...\n");
       $fo = fopen("ninja.src", "wb");
       list($rom, $header) = lynx_read($source . $file);
       fputs($fo, $rom);
@@ -540,7 +441,7 @@ function ninja_block($source, $modified, $type, $file = null)
   else
   {
 
-    echo("No differences! File will be ignored.\r\n");
+    echo("No differences! File will be ignored.\n");
     return("");
 
   }
@@ -562,18 +463,18 @@ function apply_ninja2($rup_file, $target)
 
   // Make sure the input is all valid
   if(!file_exists($rup_file))
-    die("Error: apply_ninja2(): Unable to open $rup_file\r\n\r\n");
+    die("Error: apply_ninja2(): Unable to open $rup_file\n\n");
   if(!file_exists($target))
-    die("Error: apply_ninja2(): Unable to open $target\r\n\r\n");
+    die("Error: apply_ninja2(): Unable to open $target\n\n");
 
   // Open the patch file as a stream
   $rup = fopen($rup_file, "rb");
 
   // Check the ID Tag
   if(fread($rup, 6) != "NINJA2")
-    die("Error: apply_ninja2(): Supplied RUP file does not appear to be a RUP format patch\r\n\r\n");
+    die("Error: apply_ninja2(): Supplied RUP file does not appear to be a RUP format patch\n\n");
 
-  echo("Type NINJA 2.0 patch detected!\r\n");
+  echo("Type NINJA 2.0 patch detected!\n");
   
   // Skip internal info this time
 
@@ -670,7 +571,7 @@ function apply_ninja2($rup_file, $target)
       $fileprop["smd5"]  = bin2hex(fread($rup, 16));
       $fileprop["mmd5"]  = bin2hex(fread($rup, 16));
 
-      echo("Patching $target".$fileprop["name"]."\r\n");
+      echo("Patching $target".$fileprop["name"]."\n");
 
       // Perform conversion if needed depending on file type
       switch($fileprop["type"])
@@ -678,7 +579,7 @@ function apply_ninja2($rup_file, $target)
 
         // Nintendo Entertainment System/Famicom
         case "1":
-          echo("Reading as Nintendo Entertainment System/Famicom ROM ...\r\n");
+          echo("Reading as Nintendo Entertainment System/Famicom ROM...\n");
 	  $fo = fopen("ninja.src", "wb");
 	  list($rom, $header) = nes_read($target . $fileprop["name"]);
           fputs($fo, $rom);
@@ -687,7 +588,7 @@ function apply_ninja2($rup_file, $target)
 
         // Super Famicom
         case "3":
-          echo("Reading as Super Famicom ROM ...\r\n");
+          echo("Reading as Super Famicom ROM...\n");
           $fo = fopen("ninja.src", "wb");
 	  list($rom, $header) = sfam_read($target . $fileprop["name"]);
           fputs($fo, $rom);
@@ -696,7 +597,7 @@ function apply_ninja2($rup_file, $target)
 
         // Nintendo 64
         case "4":
-          echo("Reading as Nintendo 64 ROM ...\r\n");
+          echo("Reading as Nintendo 64 ROM...\n");
           $fo = fopen("ninja.src", "wb");
           fputs($fo, n64_read($target . $fileprop["name"]));
           fclose($fo);
@@ -704,7 +605,7 @@ function apply_ninja2($rup_file, $target)
 
         // Game Boy
         case "5":
-          echo("Reading as Game Boy ROM ...\r\n");
+          echo("Reading as Game Boy ROM...\n");
           $fo = fopen("ninja.src", "wb");
           fputs($fo, gb_read($target . $fileprop["name"]));
           fclose($fo);
@@ -712,7 +613,7 @@ function apply_ninja2($rup_file, $target)
 
         // Sega Master System
         case "6":
-          echo("Reading as Sega Master System ROM ...\r\n");
+          echo("Reading as Sega Master System ROM...\n");
           $fo = fopen("ninja.src", "wb");
           fputs($fo, sms_read($target . $fileprop["name"]));
           fclose($fo);
@@ -720,7 +621,7 @@ function apply_ninja2($rup_file, $target)
 
         // Sega Megadrive
         case "7":
-          echo("Reading as Sega Megadrive ROM ...\r\n");
+          echo("Reading as Sega Megadrive ROM...\n");
           $fo = fopen("ninja.src", "wb");
           fputs($fo, mega_read($target . $fileprop["name"]));
           fclose($fo);
@@ -728,7 +629,7 @@ function apply_ninja2($rup_file, $target)
 
         // NEC PC-Engine
         case "8":
-          echo("Reading as NEC PC-Engine ROM ...\r\n");
+          echo("Reading as NEC PC-Engine ROM...\n");
           $fo = fopen("ninja.src", "wb");
 	  $rom = pce_read($target . $fileprop["name"]);
           fputs($fo, $rom);
@@ -737,7 +638,7 @@ function apply_ninja2($rup_file, $target)
 
         // Atari Lynx
         case "9":
-          echo("Reading as Atari Lynx ROM ...\r\n");
+          echo("Reading as Atari Lynx ROM...\n");
 	  $fo = fopen("ninja.src", "wb");
 	  list($rom, $header) = lynx_read($target . $fileprop["name"]);
           fputs($fo, $rom);
@@ -759,12 +660,12 @@ function apply_ninja2($rup_file, $target)
       {
 
         $fileprop["revert"] = TRUE;
-        echo("Reverting to pre-patched file ...\r\n");
+        echo("Reverting to pre-patched file...\n");
 
       }
 
       else
-        die("Error: apply_ninja2(): File does not match required MD5!\r\n\r\nExpected:\r\n  Source MD5  : ".$fileprop["smd5"]."\r\n  Modified MD5: ".$fileprop["mmd5"]."\r\nFound:\r\n  Target MD5  : ".$targetmd5."\r\n\r\n");
+        die("Error: apply_ninja2(): File does not match required MD5!\n\nExpected:\n  Source MD5  : ".$fileprop["smd5"]."\n  Modified MD5: ".$fileprop["mmd5"]."\nFound:\n  Target MD5  : ".$targetmd5."\n\n");
 
       if(file_exists("ninja.src"))
         $fo = fopen("ninja.src", "r+b");
@@ -818,7 +719,7 @@ function apply_ninja2($rup_file, $target)
     }
 
     else
-      die("Error: apply_ninja2(): Unknown fatal error (".ord($control)."), file may be corrupt\r\n");
+      die("Error: apply_ninja2(): Unknown fatal error (".ord($control)."), file may be corrupt\n");
 
     $control = fgetc($rup);
 
@@ -890,7 +791,7 @@ function apply_ninja2($rup_file, $target)
 
   fclose($rup);
 
-  echo("Complete!\r\n");
+  echo("Complete!\n");
 
 }
 
@@ -909,17 +810,17 @@ function apply_ips($ips_file, $bin_file)
 
   // Make sure the input is all valid
   if(!file_exists($ips_file))
-    die("Error: apply_ips(): Unable to open $ips_file\r\n\r\n");
+    die("Error: apply_ips(): Unable to open $ips_file\n\n");
   if(!file_exists($bin_file))
-    die("Error: apply_ips(): Unable to open $bin_file\r\n\r\n");
+    die("Error: apply_ips(): Unable to open $bin_file\n\n");
 
   // Open the patch file as a stream
   $ips = fopen($ips_file, "rb");
 
   if(fread($ips, 5) != "PATCH")
-    die("Error: apply_ips(): Supplied IPS file does not appear to be an IPS format patch\r\n\r\n");
+    die("Error: apply_ips(): Supplied IPS file does not appear to be an IPS format patch\n\n");
 
-  echo("Type IPS patch detected!\nApplying $ips_file to $bin_file ...\r\n");
+  echo("Type IPS patch detected!\nApplying $ips_file to $bin_file...\n");
 
   // Open the binary file in read/write mode
   $fa = fopen($bin_file, "r+b");
@@ -964,7 +865,7 @@ function apply_ips($ips_file, $bin_file)
   if(ftell($ips) < filesize($ips_file))
   {
 
-    echo("Truncating file ...\r\n"); 
+    echo("Truncating file...\n"); 
     ftruncate($fa, punpack(fread($ips, 3), "b"));
 
   }
@@ -972,7 +873,7 @@ function apply_ips($ips_file, $bin_file)
   fclose($fa);
   fclose($ips);
 
-  echo("Complete!\r\n");
+  echo("Complete!\n");
 
 }
 
@@ -990,9 +891,9 @@ function apply_ppf($ppf_file, $bin_file)
 
   // Make sure the input is all valid
   if(!file_exists($ppf_file))
-    die("Error: apply_ppf(): Unable to open $ppf_file\r\n\r\n");
+    die("Error: apply_ppf(): Unable to open $ppf_file\n\n");
   if(!file_exists($bin_file))
-    die("Error: apply_ppf(): Unable to open $bin_file\r\n\r\n");
+    die("Error: apply_ppf(): Unable to open $bin_file\n\n");
 
   // This is dirty code, it should be fixed later
   $ppfdump = file_read($ppf_file);
@@ -1006,14 +907,14 @@ function apply_ppf($ppf_file, $bin_file)
   $ppf = fopen($ppf_file, "rb");
 
   if(fread($ppf, 3) != "PPF")
-    die("Error: apply_ppf(): Not a valid PPF patch\r\n\r\n");
+    die("Error: apply_ppf(): Not a valid PPF patch\n\n");
 
   $magic = fread($ppf, 2);
 
   if(($magic == "10" || $magic == "20" || $magic == "30") && ord(fgetc($ppf)) == 0)
   {
 
-    echo("Type PPF 1.0 patch detected!\r\nApplying $ppf_file to $bin_file ...\r\n");
+    echo("Type PPF 1.0 patch detected!\nApplying $ppf_file to $bin_file...\n");
 
     // Skip PPF internal info
     
@@ -1034,14 +935,14 @@ function apply_ppf($ppf_file, $bin_file)
     fclose($fa);
     fclose($ppf);
 
-    echo("Complete!\r\n");
+    echo("Complete!\n");
 
   }
 
   else if(($magic == "20" || $magic == "30") && ord(fgetc($ppf)) == 1)
   {
 
-    echo("Type PPF 2.0 patch detected!\r\nApplying $ppf_file to $bin_file ...\r\n");
+    echo("Type PPF 2.0 patch detected!\nApplying $ppf_file to $bin_file...\n");
 
     // Skip PPF internal info
     
@@ -1052,7 +953,7 @@ function apply_ppf($ppf_file, $bin_file)
 
     // Run the PPF file size check
     if(punpack(fread($ppf, 4)) != filesize($bin_file))
-      die("Error: apply_ppf(): Target file size does not match patch requirement\r\n\r\n");
+      die("Error: apply_ppf(): Target file size does not match patch requirement\n\n");
 
     // Run the PPF sector match check
     fseek($fa, 0x9320, SEEK_SET);
@@ -1062,7 +963,7 @@ function apply_ppf($ppf_file, $bin_file)
     fseek($fa, 0, SEEK_SET);
 
     if($ppf_bin_block != $org_bin_block)
-      die("Error: apply_ppf(): Target file sector \$9320 does not match patch requirement\r\n\r\n");
+      die("Error: apply_ppf(): Target file sector \$9320 does not match patch requirement\n\n");
 
     // Unset variables and free up some RAM
     unset($ppf_bin_block, $org_bin_block);
@@ -1079,14 +980,14 @@ function apply_ppf($ppf_file, $bin_file)
     fclose($fa);
     fclose($ppf);
 
-    echo("Complete!\r\n");
+    echo("Complete!\n");
 
   }
 
   else if($magic == "30" && ord(fgetc($ppf)) == 2)
   {
 
-    echo("Type PPF 3.0 patch detected!\r\nApplying $ppf_file to $bin_file ...\r\n");
+    echo("Type PPF 3.0 patch detected!\nApplying $ppf_file to $bin_file...\n");
 
     // Skip PPF internal info
     
@@ -1114,7 +1015,7 @@ function apply_ppf($ppf_file, $bin_file)
       fseek($fa, 0, SEEK_SET);
 
       if($ppf_bin_block != $org_bin_block)
-        die("Error: apply_ppf(): Target file sector does not match patch requirement\r\n\r\n");
+        die("Error: apply_ppf(): Target file sector does not match patch requirement\n\n");
 
       // Unset variables and free up some RAM
       unset($ppf_bin_block, $org_bin_block);
@@ -1132,12 +1033,12 @@ function apply_ppf($ppf_file, $bin_file)
     fclose($fa);
     fclose($ppf);
 
-    echo("Complete!\r\n");
+    echo("Complete!\n");
 
   }
 
   else
-    die("Error: apply_ppf(): Unsupported PPF version\r\n\r\n");
+    die("Error: apply_ppf(): Unsupported PPF version\n\n");
 
 }
 
@@ -1157,17 +1058,17 @@ function apply_gdiff($diff_file, $bin_file)
 
   // Make sure the input is all valid
   if(!file_exists($diff_file))
-    die("Error: apply_gdiff(): Unable to open $diff_file\r\n\r\n");
+    die("Error: apply_gdiff(): Unable to open $diff_file\n\n");
   if(!file_exists($bin_file))
-    die("Error: apply_gdiff(): Unable to open $bin_file\r\n\r\n");
+    die("Error: apply_gdiff(): Unable to open $bin_file\n\n");
 
   // Open the patch file as a stream
   $diff = fopen($diff_file, "rb");
 
   if(fread($ips, 5) != "\xd1\xff\xd1\xff\x04")
-    die("Error: apply_gdiff(): Supplied Diff file does not appear to be a Generic Diff Format version 4 patch\r\n\r\n");
+    die("Error: apply_gdiff(): Supplied Diff file does not appear to be a Generic Diff Format version 4 patch\n\n");
 
-  echo("Type Generic Diff Format patch detected!\nApplying $diff_file to $bin_file ...\r\n");
+  echo("Type Generic Diff Format patch detected!\nApplying $diff_file to $bin_file...\n");
 
   // Open the binary file in read/write mode
   $fa = fopen($bin_file, "r");
@@ -1198,7 +1099,7 @@ function apply_gdiff($diff_file, $bin_file)
 
       list($temp) = unpack("V", fread($diff, 4));
       if($temp > 0x7fffffff)
-        die("Error: apply_gdiff(): Cannot read negative bytes (-".dechex($temp - 0x7fffffff).")\r\n\r\n");
+        die("Error: apply_gdiff(): Cannot read negative bytes (-".dechex($temp - 0x7fffffff).")\n\n");
       fputs($fo, fread($diff, $temp));
 
     }
@@ -1233,7 +1134,7 @@ function apply_gdiff($diff_file, $bin_file)
       fseek($fa, $temp, SEEK_SET);
       list($temp) = unpack("V", fread($diff, 4));
       if($temp > 0x7fffffff)
-        die("Error: apply_gdiff(): Cannot read negative bytes (-".dechex($temp - 0x7fffffff).")\r\n\r\n");
+        die("Error: apply_gdiff(): Cannot read negative bytes (-".dechex($temp - 0x7fffffff).")\n\n");
       fputs($fo, fread($fa, $temp));
 
     }
@@ -1244,7 +1145,7 @@ function apply_gdiff($diff_file, $bin_file)
 
       list($temp) = unpack("V", fread($diff, 4));
       if($temp > 0x7fffffff)
-        die("Error: apply_gdiff(): Cannot read negative bytes (-".dechex($temp - 0x7fffffff).")\r\n\r\n");
+        die("Error: apply_gdiff(): Cannot read negative bytes (-".dechex($temp - 0x7fffffff).")\n\n");
       fseek($fa, $temp, SEEK_SET);
       list($temp) = ord(fgetc($diff));
       fputs($fo, fread($fa, $temp));
@@ -1257,7 +1158,7 @@ function apply_gdiff($diff_file, $bin_file)
 
       list($temp) = unpack("V", fread($diff, 4));
       if($temp > 0x7fffffff)
-        die("Error: apply_gdiff(): Cannot read negative bytes (-".dechex($temp - 0x7fffffff).")\r\n\r\n");
+        die("Error: apply_gdiff(): Cannot read negative bytes (-".dechex($temp - 0x7fffffff).")\n\n");
       fseek($fa, $temp, SEEK_SET);
       list($temp) = unpack("v", fread($diff, 2));
       fputs($fo, fread($fa, $temp));
@@ -1270,11 +1171,11 @@ function apply_gdiff($diff_file, $bin_file)
 
       list($temp) = unpack("V", fread($diff, 4));
       if($temp > 0x7fffffff)
-        die("Error: apply_gdiff(): Cannot read negative bytes (-".dechex($temp - 0x7fffffff).")\r\n\r\n");
+        die("Error: apply_gdiff(): Cannot read negative bytes (-".dechex($temp - 0x7fffffff).")\n\n");
       fseek($fa, $temp, SEEK_SET);
       list($temp) = unpack("V", fread($diff, 4));
       if($temp > 0x7fffffff)
-        die("Error: apply_gdiff(): Cannot read negative bytes (-".dechex($temp - 0x7fffffff).")\r\n\r\n");
+        die("Error: apply_gdiff(): Cannot read negative bytes (-".dechex($temp - 0x7fffffff).")\n\n");
       fputs($fo, fread($fa, $temp));
 
     }
@@ -1285,11 +1186,11 @@ function apply_gdiff($diff_file, $bin_file)
 
       list($temp) = punpack(fread($diff, 8), 64);
       if(gmp_cmp("$temp", "0x7fffffffffffffff") == 1)
-        die("Error: apply_gdiff(): Cannot read negative bytes (-".dechex($temp - 0x7fffffff).")\r\n\r\n");
+        die("Error: apply_gdiff(): Cannot read negative bytes (-".dechex($temp - 0x7fffffff).")\n\n");
       fseek($fa, $temp, SEEK_SET);
       list($temp) = unpack("V", fread($diff, 4));
       if($temp > 0x7fffffff)
-        die("Error: apply_gdiff(): Cannot read negative bytes (-".dechex($temp - 0x7fffffff).")\r\n\r\n");
+        die("Error: apply_gdiff(): Cannot read negative bytes (-".dechex($temp - 0x7fffffff).")\n\n");
       fputs($fo, fread($fa, $temp));
 
     }
@@ -1305,7 +1206,7 @@ function apply_gdiff($diff_file, $bin_file)
   unlink($bin_file);
   rename("ninja.src", $bin_file);
 
-  echo("Complete!\r\n");
+  echo("Complete!\n");
 
 }
 
@@ -1326,14 +1227,14 @@ function apply_fireflower($fire_file, $bin_file)
 
   // Make sure the input is all valid
   if(!file_exists($fire_file))
-    die("Error: apply_fireflower(): Unable to open $fire_file\r\n\r\n");
+    die("Error: apply_fireflower(): Unable to open $fire_file\n\n");
   if(!file_exists($bin_file))
-    die("Error: apply_fireflower(): Unable to open $bin_file\r\n\r\n");
+    die("Error: apply_fireflower(): Unable to open $bin_file\n\n");
 
   // Open the patch file as a stream
   $fire = fopen($fire_file, "rb");
 
-  echo("Type FireFlower Patch Format/Microsoft File Compare assumed!\r\nApplying $fire_file to $bin_file ...\r\n\r\nComments:\r\n");
+  echo("Type FireFlower Patch Format/Microsoft File Compare assumed!\nApplying $fire_file to $bin_file...\n\nComments:\n");
 
   // Open the binary file in read/write mode
   $fa = fopen($bin_file, "r+b");
@@ -1362,26 +1263,26 @@ function apply_fireflower($fire_file, $bin_file)
           fseek($fa, $offset, SEEK_SET);
           if($cur_byte == $src_byte) fputs($fa, chr($mod_byte));
           else if($cur_byte == $mod_byte) fputs($fa, chr($src_byte));
-          else echo "Unexpected byte found at 0x" . dechex($offset) . "\r\n";
+          else echo "Unexpected byte found at 0x" . dechex($offset) . "\n";
 
         }
 
-        else echo "$buffer\r\n";
+        else echo "$buffer\n";
 
       }
 
-      else echo "$buffer\r\n";
+      else echo "$buffer\n";
 
     }
 
-    else echo "$buffer\r\n";
+    else echo "$buffer\n";
 
   }
 
   fclose($fa);
   fclose($fire);
 
-  echo("Complete!\r\n");
+  echo("Complete!\n");
 
 }
 
@@ -1462,7 +1363,7 @@ function pxor($string, $xor)
 {
 
   if($xor == null || $string == null)
-    die("Error: pxor(): Requires a non-null string and non-null xor\r\n\r\n");
+    die("Error: pxor(): Requires a non-null string and non-null xor\n\n");
 
   while(strlen($string) > strlen($xor))
     $xor .= $xor;
@@ -1494,10 +1395,10 @@ function ppack($value, $bits = 16, $endian = "l")
 {
 
   if($bits > 64 || gmp_cmp("$value", "0xffffffffffffffff") > 0)
-    die("Error: ppack(): Value is greater than 64 bits\r\n\r\n");
+    die("Error: ppack(): Value is greater than 64 bits\n\n");
   else if(($bits == 8 && $value > 0xff)||($bits == 16 && $value > 0xffff)||($bits == 24 && $value > 0xffffff)||($bits == 32 && $value > 0xffffffff)||
 	  ($bits == 40 && gmp_cmp("$value", "0xffffffffff") > 0)||($bits == 48 && gmp_cmp("$value", "0xffffffffffff") > 0)||($bits == 56 && gmp_cmp("$value", "0xffffffffffffff") > 0)||($bits == 64 && gmp_cmp("$value", "0xffffffffffffffff") > 0))
-    die("Error: ppack(): Value passed exceeds specified bits\r\n\r\n");
+    die("Error: ppack(): Value passed exceeds specified bits\n\n");
 
   if(is_numeric($value) && $value <= 0xffffffff)
   {
@@ -1528,7 +1429,7 @@ function ppack($value, $bits = 16, $endian = "l")
   }
 
   else
-    die("Error: ppack(): GMP is required for integers over 32-bits\r\n\r\n");
+    die("Error: ppack(): GMP is required for integers over 32-bits\n\n");
 
 }
 
@@ -1565,7 +1466,7 @@ function punpack($value, $endian = "l")
   }
 
   else
-    die("Error: punpack(): GMP is required for integers over 32-bits\r\n\r\n");
+    die("Error: punpack(): GMP is required for integers over 32-bits\n\n");
 
 }
 
@@ -1625,7 +1526,7 @@ function list_dir($path, $mask = "*.*", $slash = "/", $recurse = FALSE)
   }
 
   else
-    die("Error: list_dir(): Unable to open $path\r\n\r\n");
+    die("Error: list_dir(): Unable to open $path\n\n");
 
   return($files);
 
@@ -1645,7 +1546,7 @@ function file_read($filename, $length = null, $offset = 0)
 {
 
   if(!file_exists($filename))
-    die("Error: file_read(): Unable to open $filename\r\n\r\n");
+    die("Error: file_read(): Unable to open $filename\n\n");
 
   if($length == null)
     $length = filesize($filename);
@@ -1672,7 +1573,7 @@ function smd_deint($chunk)
 {
 
   if(strlen($chunk) != 16 * KBYTE)
-    die("Error: smd_deint(): Chunk does not equal 16KB\r\n\r\n");
+    die("Error: smd_deint(): Chunk does not equal 16KB\n\n");
 
   $low   = 1;
   $high  = 0;
@@ -1707,7 +1608,7 @@ function sfam_read($infile)
 {
 
   if(!file_exists($infile))
-    die("Error: sfam_read(): Unable to open $infile\r\n\r\n");
+    die("Error: sfam_read(): Unable to open $infile\n\n");
 
   $fddump = file_read($infile);
   $header = "";
@@ -1731,7 +1632,7 @@ function sfam_read($infile)
   if($test['inverse'] + $test['checksum'] == 0xffff && $test['romstate'] % 2 == 0)
   {
 
-    echo("ROM type LoROM detected\r\n");
+    echo("ROM type LoROM detected\n");
     return(array($fddump, $header));
 
   }
@@ -1787,7 +1688,7 @@ function sfam_read($infile)
       for($i = 0; $i < 0x50; $i ++)
         $deinterleave .= $chunks[array_search($i, $chart_20mbit)];
 
-      echo("ROM type HiROM interleaved detected\r\n");
+      echo("ROM type HiROM interleaved detected\n");
       return(array($deinterleave, $header));
 
     }
@@ -1805,7 +1706,7 @@ function sfam_read($infile)
       for($i = 0; $i < 0x60; $i ++)
         $deinterleave .= $chunks[array_search($i, $chart_24mbit)];
 
-      echo("ROM type HiROM interleaved detected\r\n");
+      echo("ROM type HiROM interleaved detected\n");
       return(array($deinterleave, $header));
 
     }
@@ -1823,7 +1724,7 @@ function sfam_read($infile)
       for($i = 0; $i < 0xc0; $i ++)
         $deinterleave .= $chunks[array_search($i, $chart_48mbit)];
 
-      echo("ROM type HiROM interleaved detected\r\n");
+      echo("ROM type HiROM interleaved detected\n");
       return(array($deinterleave, $header));
 
     }
@@ -1842,7 +1743,7 @@ function sfam_read($infile)
 
       }
 
-      echo("ROM type HiROM interleaved detected\r\n");
+      echo("ROM type HiROM interleaved detected\n");
       return(array($deinterleave, $header));
 
     }
@@ -1856,7 +1757,7 @@ function sfam_read($infile)
   if($test['inverse'] + $test['checksum'] == 0xffff && $test['romstate'] % 2 != 0)
   {
 
-    echo("ROM type HiROM deinterleaved detected\r\n");
+    echo("ROM type HiROM deinterleaved detected\n");
     return(array($fddump, $header));
 
   }
@@ -1864,13 +1765,13 @@ function sfam_read($infile)
   else if($test['romstate'] % 2 != 0)
   {
 
-    echo("ROM type uncertain. Possibly a HiROM beta or unreleased game ...\r\n");
+    echo("ROM type uncertain. Possibly a HiROM beta or unreleased game...\n");
     return(array($fddump, $header));
 
   }
 
   else
-    die("Error: sfam_read(): Supplied ROM file does not appear to be Super Nintendo ROM\r\n\r\n");
+    die("Error: sfam_read(): Supplied ROM file does not appear to be Super Nintendo ROM\n\n");
 
 }
 
@@ -1888,7 +1789,7 @@ function sms_read($infile)
 {
 
   if(!file_exists($infile))
-    die("Error: sms_read(): Unable to open $infile\r\n\r\n");
+    die("Error: sms_read(): Unable to open $infile\n\n");
 
   $fd = fopen($infile, "rb");
   fseek($fd, 0x7ff4, SEEK_SET);
@@ -1920,7 +1821,7 @@ function sms_read($infile)
   }
 
   else
-    die("Error: sms_read(): Supplied ROM file does not appear to be Megadrive ROM\r\n\r\n");
+    die("Error: sms_read(): Supplied ROM file does not appear to be Megadrive ROM\n\n");
 
 }
 
@@ -1938,7 +1839,7 @@ function mega_read($infile)
 {
 
   if(!file_exists($infile))
-    die("Error: mega_read(): Unable to open $infile\r\n\r\n");
+    die("Error: mega_read(): Unable to open $infile\n\n");
 
   $fd = fopen($infile, "rb");
   fseek($fd, 0x100, SEEK_SET);
@@ -1972,7 +1873,7 @@ function mega_read($infile)
   }
 
   else
-    die("Error: mega_read(): Supplied ROM file does not appear to be Megadrive ROM\r\n\r\n");
+    die("Error: mega_read(): Supplied ROM file does not appear to be Megadrive ROM\n\n");
 
 }
 
@@ -2006,7 +1907,7 @@ function gb_read($infile)
 
   // Magic byte suggested by Aerdan. Does this cause unlicensed games to fail?
   if(substr($rom, 0x104, 4) != "\xce\xed\x66\x66")
-    die("Error: gb_read(): Supplied ROM file does not appear to be Game Boy ROM\r\n\r\n");
+    die("Error: gb_read(): Supplied ROM file does not appear to be Game Boy ROM\n\n");
 
   return($rom);
 
@@ -2107,7 +2008,7 @@ function nes_read($infile)
   }
 
   else
-    die("Error: nes_read(): Supplied ROM file is not a supported ROM format\r\n\r\n");
+    die("Error: nes_read(): Supplied ROM file is not a supported ROM format\n\n");
 
   fclose($fd);
 
@@ -2289,7 +2190,7 @@ function n64_read($infile)
   }
 
   else
-    die("Error: n64_read(): Supplied ROM file does not appear to be Nintendo 64 ROM\r\n\r\n");
+    die("Error: n64_read(): Supplied ROM file does not appear to be Nintendo 64 ROM\n\n");
 
   fclose($fd);
 
@@ -2311,20 +2212,20 @@ function main($argc, $argv)
   if(file_exists("ninja.src")) unlink("ninja.src");
   if(file_exists("ninja.mod")) unlink("ninja.mod");
 
-  $version = "2.0.0";
-  echo("NINJA v$version (C)2006 Derrick Sobodash\r\n\r\n");
+  $version = "2.0";
+  echo("NINJA $version (cli)\nCopyright (c) 2006, 2012 Derrick Sobodash\n");
   set_time_limit(0x600000);
 
   // Check the PHP version of the user
   if(phpversion() < "5")
-    die("Error: You must be running PHP version 5.0 or greater! Please upgrade.\r\n  Newer versions can be obtained for free from http://www.php.net/\r\n\r\n");
+    die("Error: You must be running PHP version 5.0 or greater! Please upgrade.\n  Newer versions can be obtained for free from http://www.php.net/\n\n");
 
   if($argc == 3)
   {
 
     list($killit, $patch, $target) = $argv;
     if(!file_exists($patch))
-      die("Error: Patch file not found\r\n\r\n");
+      die("Error: Patch file not found\n\n");
 
   }
 
@@ -2334,12 +2235,12 @@ function main($argc, $argv)
     list($killit, $source, $modified, $target, $type, $info) = $argv;
 
     if(!file_exists($source) && !file_exists($modified))
-      die("Error: Source or modified not found\r\n\r\n");
+      die("Error: Source or modified not found\n\n");
 
   }
 
   else
-    die("Bad command line!\r\n\r\nCreate Patch:\r\n  ninja2.php source_file modified_file target_file format info_file\r\nApply Patch:\r\n  ninja2.php patch_file target_filer\r\n\r\nSource, modified and target can be either directories or files.\r\n\r\n");
+    die("Bad command line!\n\nCreate Patch:\n  ninja2.php source_file modified_file target_file format info_file\nApply Patch:\n  ninja2.php patch_file target_filer\n\nSource, modified and target can be either directories or files.\n\n");
 
   unset($killit);
 
@@ -2347,7 +2248,7 @@ function main($argc, $argv)
   {
 
     if(!is_writable($target))
-      die("Target file is not writeable!\r\n\r\nPlease check to make sure the file is not marked Read-Only and that you have permissions to modify this file.\r\n\r\n");
+      die("Target file is not writeable!\n\nPlease check to make sure the file is not marked Read-Only and that you have permissions to modify this file.\n\n");
 
     // Read the file tag and version
     $fd = fopen($patch, "rb");
@@ -2372,19 +2273,19 @@ function main($argc, $argv)
     {
 
       if(!file_exists("xdelta.exe"))
-        die("Error: xdelta binary is unavailable\r\n\r\n");
+        die("Error: xdelta binary is unavailable\n\n");
       else
       {
 
-        echo("Outputting to $target-patched...\r\n\r\n");
+        echo("Outputting to $target-patched...\n\n");
 
         exec("xdelta.exe patch -V \"$patch\" \"$target\" \"$target-patched\"");
 	if(filesize("$target-patched") > 0)
-          echo("The file appears to have been patched successfully. However, errors are still possible if your MD5 sum did not match the expected value.\r\n\r\nIf you wish to be sure, you should run xdelta.exe from the command line. Its MD5 notices are not printed to the console in a way that can be trapped and displayed here.");
+          echo("The file appears to have been patched successfully. However, errors are still possible if your MD5 sum did not match the expected value.\n\nIf you wish to be sure, you should run xdelta.exe from the command line. Its MD5 notices are not printed to the console in a way that can be trapped and displayed here.");
         else
 	{
 
-          echo("File patching failed.\r\n\r\nMost likely, this was cause by your file being a different file size than that which is expected in the xdelta patch.");
+          echo("File patching failed.\n\nMost likely, this was cause by your file being a different file size than that which is expected in the xdelta patch.");
           unlink("$target-patched");
 
 	}
@@ -2400,7 +2301,7 @@ function main($argc, $argv)
       if($filever == "2")
         apply_ninja2($patch, $target);
       else
-        die("Error: Unsupported NINJA patch version\r\n\r\n");
+        die("Error: Unsupported NINJA patch version\n\n");
 
     }
 
@@ -2409,7 +2310,7 @@ function main($argc, $argv)
     {
 
       $fd = fopen($patch, "rb");
-      $fileid  = explode("\r\n", fread($fd, filesize($patch)));
+      $fileid  = explode("\n", fread($fd, filesize($patch)));
       fclose($fd);
       $is_fireflower = 0;
 
@@ -2440,7 +2341,7 @@ function main($argc, $argv)
         apply_fireflower($patch, $target);
 
       else
-        die("Error: Unsupported patch format\r\n\r\n"); 
+        die("Error: Unsupported patch format\n\n"); 
 
     }
 
@@ -2473,20 +2374,10 @@ function main($argc, $argv)
   }
 
   else
-    die("Error: Unknown error in main()\r\n\r\n");
+    die("Error: Unknown error in main()\n\n");
 
 }
 
-
 main($argc, $argv);
-
-
-
-/******************************************************************************
-**
-** SOURCE CODE ENDS
-**
-******************************************************************************/
-
 
 ?>
